@@ -7,7 +7,7 @@ This repo contains the working code for a "Smart Support Ticket" pipeline that c
 | Variant | Purpose | Course usage |
 |---|---|---|
 | [`function-simulated-no-email/`](./function-simulated-no-email) | Pipeline with manual blob upload as the trigger source | Course 2 hands-on labs |
-| [`function-email-and-teams/`](./function-email-and-teams) | Same pipeline plus a Microsoft Graph integration for live email and Teams escalation | Course 1 video walkthrough |
+| [`function-email-and-teams/`](./function-email-and-teams) | Same pipeline plus a Microsoft Graph integration for live email and Teams escalation | Course 2 video demo walkthrough |
 
 ## How it works
 
