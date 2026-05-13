@@ -1,6 +1,6 @@
 # function-simulated-no-email
 
-The Smart Support Ticket pipeline driven by manual blob uploads. This is the variant used in the Course 2 hands-on labs.
+The Smart Support Ticket pipeline driven by manual blob uploads. This is the starting variant for the Course 2 labs — learners build and exercise the core pipeline here before extending it with live email and Teams integration in [`function-email-and-teams/`](../function-email-and-teams).
 
 ## What it does
 
@@ -57,5 +57,10 @@ A document lands in Cosmos DB with the structure defined by the `TicketAnalysis`
 ## Notes on the code
 
 - The function only processes `.txt` files. Other extensions are skipped.
-- Cosmos writes use `upsert_item`, so re-running a blob (delete + re-upload, or Azure Functions retry) won't duplicate the document — the same blob name produces the same `id` only if you wire it that way. The current code uses a fresh UUID per execution, which means retries DO create new documents. If you need true idempotency, key the `id` off `blob_name`.
+- Cosmos writes use `upsert_item`. The current code generates a fresh UUID per execution, so a retry of the same blob produces a new document rather than updating an existing one. If you want true idempotency across retries, derive the `id` from the blob name.
 - The LLM call is wrapped in tenacity retry that fires only on 429 rate-limit errors. All other failures bubble up immediately.
+
+## Next step
+
+Once you have this variant running end-to-end, the function-email-and-teams/ variant extends the pipeline with a live Microsoft 365 inbox and Teams escalation.
+Heads up: that variant doesn't run in the Pluralsight lab environment — it requires resources (an Entra app registration with admin consent, a real M365 mailbox, a publicly reachable webhook URL) that only exist in your own tenant and subscription. If you want to work through it, deploy to your own Azure environment.

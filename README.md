@@ -25,6 +25,8 @@ The `function-email-and-teams` variant adds three functions around that core:
 - **Webhook receiver** (HTTP trigger) accepts Graph change notifications, fetches each new email, strips HTML, and writes a `.txt` + `.meta.json` pair to the blob container — which kicks off the core pipeline.
 - **Reply sender** (Cosmos change feed trigger) reads new ticket documents and either sends a reply via Graph on the original email thread or posts a critical-ticket alert to Teams.
 
+> **Note:** The email/Teams variant requires resources that only exist in a real Microsoft 365 tenant — an Entra ID app registration with Graph permissions, admin consent, a real mailbox, and a publicly reachable Function App URL. The Pluralsight-managed lab environment does not support this. To work through this variant, deploy it to your own Azure subscription and M365 tenant.
+
 The `.meta.json` sidecar exists because the LLM-generated document in Cosmos DB doesn't carry the Graph `messageId` needed to thread the reply. The webhook stores the message identifiers in a sidecar blob keyed by message ID, and the reply sender reads it back during reply.
 
 ## Why two variants

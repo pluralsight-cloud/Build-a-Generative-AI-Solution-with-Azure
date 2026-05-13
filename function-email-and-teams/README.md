@@ -26,6 +26,17 @@ M365 inbox  →  Graph notification  →  webhook_receiver  →  Blob Storage
                                                          ↓         ↓
                                                   Graph reply   Teams alert
 ```
+> ## Prerequisites: your own tenant and subscription
+> 
+> This variant cannot run in the Pluralsight-managed lab environment. It requires:
+> 
+> - Your own Azure subscription with permission to create resources
+> - Your own Microsoft 365 tenant with admin rights to:
+>   - Register an Entra ID application and grant admin consent for Graph permissions
+>   - Create or designate a mailbox as the support inbox
+> - A Function App deployed to a public endpoint Graph can reach
+> 
+> If you don't have a tenant set up, the [Microsoft 365 Developer Program](https://developer.microsoft.com/en-us/microsoft-365/dev-program) provides a free sandbox tenant suitable for this variant. Pair it with a personal or work Azure subscription.
 
 ## Required App Settings
 
