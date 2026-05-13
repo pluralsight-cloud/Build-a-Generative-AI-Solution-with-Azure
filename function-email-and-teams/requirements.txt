@@ -1,0 +1,13 @@
+# Core Azure Functions runtime
+azure-functions
+
+# --- AI Pipeline (Part 1) ---
+openai                        # Azure OpenAI v1 API client
+pydantic                      # Structured output schema enforcement
+tenacity                      # Exponential backoff for 429 rate limiting
+azure-cosmos                  # Cosmos DB Python SDK (upsert_item)
+
+# --- Graph Email Integration (Part 2) ---
+azure-storage-blob>=12.19.0   # BlobServiceClient for sidecar metadata + subscription state
+msal>=1.28.0                  # MSAL client credentials flow for Graph API tokens
+requests>=2.31.0              # HTTP calls to Microsoft Graph REST API
