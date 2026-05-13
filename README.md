@@ -31,7 +31,7 @@ The `.meta.json` sidecar exists because the LLM-generated document in Cosmos DB 
 
 ## Why two variants
 
-The email integration is a Course 1 conceptual demo. It illustrates how the pipeline plugs into real-world inbound traffic but introduces App Registration setup, Graph permissions, public webhook exposure, and tenant configuration that aren't necessary to teach the AI pipeline itself.
+The email integration is a conceptual demo. It illustrates how the pipeline plugs into real-world inbound traffic but introduces App Registration setup, Graph permissions, public webhook exposure, and tenant configuration that aren't necessary to teach the AI pipeline itself. It also only works in a live Azure tenant, not in the lab environments
 
 The simulated variant skips all of that. Labs in Course 2 use manual blob uploads to drive the pipeline, which keeps learners focused on Azure Functions, Azure OpenAI, Pydantic structured outputs, and Cosmos DB.
 
