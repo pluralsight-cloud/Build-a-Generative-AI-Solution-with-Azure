@@ -1,0 +1,21 @@
+# Uncomment to enable Azure Monitor OpenTelemetry
+# Ref: aka.ms/functions-azure-monitor-python
+azure-monitor-opentelemetry
+
+# Azure Functions core
+azure-functions
+
+# Azure OpenAI - uses the standard OpenAI client with base_url for v1 API
+openai>=1.40.0
+
+# Structured output validation
+pydantic>=2.8.0
+
+# Retry logic for 429 rate-limit handling
+tenacity>=8.2.0
+
+# Cosmos DB SDK
+azure-cosmos>=4.7.0
+
+# Azure identity (needed if you later switch to Managed Identity auth)
+# azure-identity>=1.15.0

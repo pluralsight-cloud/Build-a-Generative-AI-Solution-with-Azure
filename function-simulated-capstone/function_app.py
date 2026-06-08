@@ -24,7 +24,6 @@ Environment variables required (set in Settings → Environment Variables → Ap
 import azure.functions as func
 import logging
 import os
-import uuid
 from datetime import datetime, timezone
 
 from openai import OpenAI, RateLimitError
@@ -59,8 +58,12 @@ class TicketAnalysis(BaseModel):
     severity: str = Field(description="Severity level: 'low', 'medium', 'high', 'critical'")
     root_causes: list[str] = Field(description="List of potential root causes identified in the ticket")
     draft_response: str | None = Field(
-        description="A polite draft response email."
+        description="A polite draft response email. Set to null if severity is critical."
     )
+    is_critical: bool = Field(
+        description="True if the ticket contains legal threats, extreme anger, or safety concerns"
+    )
+
 
 # ---------------------------------------------------------------------------
 # Azure OpenAI client setup (v1 API)
@@ -122,7 +125,10 @@ Classification rules:
 - Categorize into one of: Billing, Technical, Account Access, Feature Request, Security, Other
 - Assess sentiment as: positive, neutral, negative, or angry
 - Assess severity as: low, medium, high, or critical
-- Generate a polite, professional draft response email
+- If the ticket contains legal threats, mentions of lawyers/lawsuits, extreme profanity,
+  or threats of harm, set is_critical to true and severity to "critical"
+- If is_critical is true, set draft_response to null (do NOT generate an automated reply)
+- If is_critical is false, generate a polite, professional draft response email
 
 Be concise. Focus on actionable root cause identification."""
 
@@ -207,10 +213,19 @@ def process_support_ticket(myblob: func.InputStream):
 
     logging.info(
         f"[AI] Analysis complete: category={analysis.category}, "
-        f"sentiment={analysis.sentiment}, severity={analysis.severity}"
+        f"sentiment={analysis.sentiment}, severity={analysis.severity}, "
+        f"is_critical={analysis.is_critical}"
     )
 
-    # ---- Step 3: Build Cosmos DB document ----
+    # ---- Step 3: Handle critical ticket escalation ----
+    if analysis.is_critical:
+        logging.warning(
+            f"[ESCALATION] CRITICAL TICKET DETECTED: {blob_name} — "
+            f"Category: {analysis.category}, Sentiment: {analysis.sentiment}. "
+            f"Suppressing auto-generated response. Flagging for human review."
+        )
+
+    # ---- Step 4: Build Cosmos DB document ----
     ticket_id = blob_name.split("/")[-1]
     document = {
         "id": ticket_id,                          # Required by Cosmos DB
@@ -221,12 +236,17 @@ def process_support_ticket(myblob: func.InputStream):
         "severity": analysis.severity,
         "root_causes": analysis.root_causes,
         "draft_response": analysis.draft_response,
+        "is_critical": analysis.is_critical,
         "source_blob": blob_name,
         "processed_at": datetime.now(timezone.utc).isoformat(),
         "raw_text_preview": ticket_text[:500],     # Store a preview, not full text
     }
 
-    # ---- Step 4: Upsert to Cosmos DB ----
+    # Add priority flag for critical tickets (capstone requirement)
+    if analysis.is_critical:
+        document["priority"] = "critical"
+
+    # ---- Step 5: Upsert to Cosmos DB ----
     try:
         container = get_cosmos_container()
         container.upsert_item(document)
@@ -237,5 +257,6 @@ def process_support_ticket(myblob: func.InputStream):
 
     logging.info(
         f"[COMPLETE] Pipeline finished for {blob_name} → "
-        f"id={ticket_id}, category={analysis.category}"
+        f"id={ticket_id}, category={analysis.category}, "
+        f"critical={analysis.is_critical}"
     )

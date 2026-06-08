@@ -23,9 +23,9 @@ Key architecture decisions:
 
 Environment variables required (set in Settings → Environment Variables → App Settings):
   --- Existing pipeline ---
-  AZURE_OPENAI_ENDPOINT     - e.g. https://your-resource.openai.azure.com
-  AZURE_OPENAI_API_KEY      - from Keys & Endpoint blade in Azure Portal
-  AZURE_OPENAI_DEPLOYMENT   - your deployment name (e.g. "gpt-5-mini")
+  FOUNDRY_ENDPOINT     - e.g. https://your-resource.openai.azure.com
+  FOUNDRY_API_KEY      - from Keys & Endpoint blade in Azure Portal
+  FOUNDRY_DEPLOYMENT   - your deployment name (e.g. "gpt-5-mini")
   COSMOS_ENDPOINT           - e.g. https://your-cosmos.documents.azure.com:443/
   COSMOS_KEY                - from Keys blade in Azure Portal
   COSMOS_DATABASE           - e.g. "SupportDB"
@@ -48,7 +48,6 @@ import logging
 import os
 import json
 import re
-import uuid
 from datetime import datetime, timedelta, timezone
 
 from openai import OpenAI, RateLimitError
@@ -59,7 +58,7 @@ from tenacity import (
     stop_after_attempt,
     retry_if_exception_type,
 )
-from azure.cosmos import CosmosClient, PartitionKey
+from azure.cosmos import CosmosClient
 from azure.storage.blob import BlobServiceClient
 
 # Graph integration dependencies
@@ -115,8 +114,8 @@ class TicketAnalysis(BaseModel):
 # avoids this issue entirely.
 # ---------------------------------------------------------------------------
 def get_openai_client() -> OpenAI:
-    endpoint = os.environ["AZURE_OPENAI_ENDPOINT"]
-    api_key = os.environ["AZURE_OPENAI_API_KEY"]
+    endpoint = os.environ["FOUNDRY_ENDPOINT"]
+    api_key = os.environ["FOUNDRY_API_KEY"]
 
     # Ensure the base_url ends with /openai/v1/
     base_url = endpoint.rstrip("/") + "/openai/v1/"
@@ -240,7 +239,7 @@ def process_support_ticket(myblob: func.InputStream):
     logging.info(f"[INGEST] Read {len(ticket_text)} characters from {blob_name}")
 
     # ---- Step 2: Call Azure OpenAI ----
-    deployment_name = os.environ["AZURE_OPENAI_DEPLOYMENT"]
+    deployment_name = os.environ["FOUNDRY_DEPLOYMENT"]
     openai_client = get_openai_client()
 
     try:
@@ -267,7 +266,7 @@ def process_support_ticket(myblob: func.InputStream):
         )
 
     # ---- Step 4: Build Cosmos DB document ----
-    ticket_id = str(uuid.uuid4())
+    ticket_id = blob_name.split("/")[-1]
     document = {
         "id": ticket_id,                          # Required by Cosmos DB
         "sender_email": analysis.sender_email,
