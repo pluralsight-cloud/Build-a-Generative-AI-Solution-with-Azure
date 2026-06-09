@@ -151,7 +151,8 @@ def call_llm(client: OpenAI, ticket_text: str, deployment_name: str) -> TicketAn
             {"role": "user", "content": ticket_text},
         ],
         response_format=TicketAnalysis,
-        max_completion_tokens=2000,   # Keep tight but leave enough for reasoning tokens.
+        reasoning_effort="low",
+        max_completion_tokens=3000,   # Keep tight but leave enough for reasoning tokens.
     )
 
     result = completion.choices[0].message.parsed
