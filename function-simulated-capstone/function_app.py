@@ -21,6 +21,26 @@ Environment variables required (set in Settings → Environment Variables → Ap
   EMAILSTORAGE_CONNECTION - connection string for the blob storage account (in storage account Keys)
 """
 
+# ===========================================================================
+# CODE REVIEW EXERCISE — CRITICAL TICKET HANDLING
+# ---------------------------------------------------------------------------
+# Every line marked with the sentinel  #~  is part of the critical-ticket
+# feature and is currently disabled. To turn the feature on, uncomment each
+# #~ line by deleting the leading  "#~ "  and keeping the indentation intact.
+#
+# The lines to uncomment, top to bottom:
+#   1. is_critical field on the TicketAnalysis schema  (the detection flag)
+#   2. is_critical in the post-analysis log line        (observability only)
+#   3. the escalation / human-review block (Step 3)     (flag + suppress intent)
+#   4. is_critical in the Cosmos document               (persist the flag)
+#   5. the priority flag block                          (mark doc as critical)
+#   6. critical in the completion log line              (observability only)
+#
+# SYSTEM_PROMPT already contains the criticality rules, so you do not need to
+# change it. Those rules start driving the is_critical field once you
+# uncomment block 1 and the field exists on the response schema.
+# ===========================================================================
+
 import azure.functions as func
 import logging
 import os
@@ -60,9 +80,10 @@ class TicketAnalysis(BaseModel):
     draft_response: str | None = Field(
         description="A polite draft response email. Set to null if severity is critical."
     )
-    is_critical: bool = Field(
-        description="True if the ticket contains legal threats, extreme anger, or safety concerns"
-    )
+    # ----- CRITICAL TICKET SETUP (block 1): uncomment to add the detection flag -----
+    #~ is_critical: bool = Field(
+    #~     description="True if the ticket contains legal threats, extreme anger, or safety concerns"
+    #~ )
 
 
 # ---------------------------------------------------------------------------
@@ -212,40 +233,44 @@ def process_support_ticket(myblob: func.InputStream):
         logging.error(f"[AI] LLM call failed for {blob_name}: {e}")
         raise
 
+    # CRITICAL TICKET SETUP (block 2): uncomment the is_critical line below.
     logging.info(
         f"[AI] Analysis complete: category={analysis.category}, "
         f"sentiment={analysis.sentiment}, severity={analysis.severity}, "
-        f"is_critical={analysis.is_critical}"
+        #~ f"is_critical={analysis.is_critical}"
     )
 
     # ---- Step 3: Handle critical ticket escalation ----
-    if analysis.is_critical:
-        logging.warning(
-            f"[ESCALATION] CRITICAL TICKET DETECTED: {blob_name} — "
-            f"Category: {analysis.category}, Sentiment: {analysis.sentiment}. "
-            f"Suppressing auto-generated response. Flagging for human review."
-        )
+    # CRITICAL TICKET SETUP (block 3): uncomment the whole block below.
+    #~ if analysis.is_critical:
+        #~ logging.warning(
+            #~ f"[ESCALATION] CRITICAL TICKET DETECTED: {blob_name} — "
+            #~ f"Category: {analysis.category}, Sentiment: {analysis.sentiment}. "
+            #~ f"Suppressing auto-generated response. Flagging for human review."
+        #~ )
 
     # ---- Step 4: Build Cosmos DB document ----
     ticket_id = blob_name.split("/")[-1]
     document = {
         "id": ticket_id,                          # Required by Cosmos DB
-        "sender_email": analysis.sender_email,   
-        "subject": analysis.subject,     
+        "sender_email": analysis.sender_email,
+        "subject": analysis.subject,
         "category": analysis.category,             # Also serves as partition key
         "sentiment": analysis.sentiment,
         "severity": analysis.severity,
         "root_causes": analysis.root_causes,
         "draft_response": analysis.draft_response,
-        "is_critical": analysis.is_critical,
+        # CRITICAL TICKET SETUP (block 4): uncomment to persist the flag.
+        #~ "is_critical": analysis.is_critical,
         "source_blob": blob_name,
         "processed_at": datetime.now(timezone.utc).isoformat(),
         "raw_text_preview": ticket_text[:500],     # Store a preview, not full text
     }
 
     # Add priority flag for critical tickets (capstone requirement)
-    if analysis.is_critical:
-        document["priority"] = "critical"
+    # CRITICAL TICKET SETUP (block 5): uncomment the whole block below.
+    #~ if analysis.is_critical:
+        #~ document["priority"] = "critical"
 
     # ---- Step 5: Upsert to Cosmos DB ----
     try:
@@ -256,8 +281,9 @@ def process_support_ticket(myblob: func.InputStream):
         logging.error(f"[DB] Cosmos DB upsert failed for {blob_name}: {e}")
         raise
 
+    # CRITICAL TICKET SETUP (block 6): uncomment the critical line below.
     logging.info(
         f"[COMPLETE] Pipeline finished for {blob_name} → "
         f"id={ticket_id}, category={analysis.category}, "
-        f"critical={analysis.is_critical}"
+        #~ f"critical={analysis.is_critical}"
     )
